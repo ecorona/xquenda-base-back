@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { UsuariosRepository } from './usuarios.repository';
 import { UsuarioEntity } from './entities/usuario.entity';
 import { PerfilesEnum } from './dto/perfiles.enum';
+import { UsuarioIdentityDTO } from './dto/usuario-identity.dto';
 
 @Injectable()
 export class UsuariosService {
@@ -56,5 +57,15 @@ export class UsuariosService {
       });
       this.logger.verbose('First user created: ' + usuarioCreado.correo);
     }
+  }
+
+  async userIdentity(user: UsuarioEntity): Promise<UsuarioIdentityDTO> {
+    return {
+      id: user.id,
+      correo: user.correo,
+      nombreCompleto: user.nombreCompleto,
+      perfil: user.perfil,
+      activo: true,
+    };
   }
 }
