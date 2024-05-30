@@ -10,6 +10,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ConfigKeys } from './config-keys.enum';
 import { ConfigValidation } from './config-validation';
+import { SyslogEntity } from './syslog/entity/syslog.entity';
 
 @Module({
   imports: [
@@ -33,7 +34,7 @@ import { ConfigValidation } from './config-validation';
       username: 'root',
       password: 'rootpassword',
       database: 'tutorial',
-      entities: [UsuarioEntity],
+      entities: [UsuarioEntity, SyslogEntity],
       synchronize: true,
     }),
     UsuariosModule,

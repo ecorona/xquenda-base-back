@@ -16,4 +16,5 @@ export const ConfigValidation = Joi.object({
   THROTTLER_LIMIT: Joi.number().default(10),
   CORS_ORIGIN: Joi.string().required(),
   APP_PREFIX: Joi.string().default('api'),
+  ENABLE_SYSLOG: Joi.boolean().default(true),
 });
