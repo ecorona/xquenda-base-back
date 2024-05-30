@@ -11,7 +11,8 @@ import {
   WsResponse,
 } from '@nestjs/websockets';
 import { SocketsAdminGuard } from './sockets-admin.guard';
-import { Socket, Server } from 'socket.io';
+import { Server } from 'socket.io';
+import { SocketUser } from './socket-user.dto';
 
 @WebSocketGateway({
   transports: ['websocket'],
@@ -26,13 +27,15 @@ export class SocketsAdminGateway
   afterInit() {
     this.logger.verbose('Sockets Gateway initialized');
   }
-  handleConnection(client: Socket, ...args: any[]) {
+  handleConnection(client: SocketUser, ...args: any[]) {
     this.logger.log(
-      `Client connected: ${client.id}||${client.handshake.query.token}||${JSON.stringify(args)}`,
+      `Client connected: ${client.id}||${client.handshake.auth.token}||${JSON.stringify(args)}`,
     );
   }
-  handleDisconnect(client: Socket) {
-    this.logger.log(`Client disconnected: ${client.id}`);
+  handleDisconnect(client: SocketUser) {
+    this.logger.log(
+      `Client disconnected: ${client.id} ${client.data.user?.correo}`,
+    );
   }
 
   emit(channel: string, event: string, data: any): void {
@@ -40,13 +43,13 @@ export class SocketsAdminGateway
   }
 
   @SubscribeMessage('canales')
-  private handleCanales(
-    @ConnectedSocket() client: Socket,
-  ): WsResponse<Array<string>> {
+  private async handleCanales(
+    @ConnectedSocket() client: SocketUser,
+  ): Promise<WsResponse<Array<string>>> {
     this.logger.log(`Client sent <canales>`);
     const canales = ['todos'];
 
-    client.join(canales);
+    await client.join(canales);
 
     return {
       event: 'canales',
@@ -56,7 +59,7 @@ export class SocketsAdminGateway
 
   @SubscribeMessage('message')
   private handleMessage(
-    @ConnectedSocket() client: Socket,
+    @ConnectedSocket() client: SocketUser,
     @MessageBody() payload: any,
   ): WsResponse<string> {
     this.logger.log(`Client sent <message>: ${JSON.stringify(payload)}`);
