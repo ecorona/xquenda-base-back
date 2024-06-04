@@ -11,7 +11,11 @@ export class AuthService {
     private readonly usuariosService: UsuariosService,
     private readonly jwtService: JwtService,
   ) {}
-  async login(correo: string, contrasenia: string): Promise<LoginResponseDTO> {
+  async login(
+    correo: string,
+    contrasenia: string,
+    ip: string,
+  ): Promise<LoginResponseDTO> {
     const usuario = await this.usuariosService.findByEmail(correo);
     //ver si el usuario existe,
     if (!usuario) {
@@ -35,7 +39,7 @@ export class AuthService {
     }
 
     //generar token
-    const payload: TokenPayloadDTO = { sub: usuario.id };
+    const payload: TokenPayloadDTO = { sub: usuario.id, ip };
     const access_token = this.jwtService.sign(payload);
 
     return {

@@ -11,12 +11,15 @@ import { UsuariosService } from './usuarios.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import { SyslogInclude } from 'src/syslog/interceptors/syslog-include.decorator';
+import { PerfilesEnum } from './dto/perfiles.enum';
+import { IsProfile } from 'src/auth/jwt/profile.decorator';
 
 @Controller('usuarios')
 export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
 
   @Post()
+  @IsProfile(PerfilesEnum.SUPER, PerfilesEnum.ADMIN)
   @SyslogInclude('Crear usuario')
   create(@Body() createUsuarioDto: CreateUsuarioDto) {
     return this.usuariosService.create(createUsuarioDto);

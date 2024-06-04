@@ -18,14 +18,17 @@ import { AuthService } from 'src/auth/auth.service';
 
 @WebSocketGateway({
   transports: ['websocket'],
+  path: '/admin',
 })
 @UseGuards(SocketsAdminGuard)
 export class SocketsAdminGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
   constructor(private readonly authService: AuthService) {}
+
   @WebSocketServer()
   private server: Server;
+
   private readonly logger = new Logger(SocketsAdminGateway.name);
   afterInit() {
     this.logger.verbose('Sockets Gateway initialized');
@@ -42,11 +45,17 @@ export class SocketsAdminGateway
           client.emit('exception', new WsException('Usuario no encontrado'));
           client.disconnect();
         }
+
+        if (!user.activo) {
+          client.emit('exception', new WsException('Usuario inactivo'));
+          client.disconnect();
+        }
+
         client.data = {
           user,
         };
         this.logger.log(
-          `Client connected: ${client.id} - ${client.data.user.correo}`,
+          `Client connected: ${client.id} - ${client.data.user.correo} (${client.data.user.perfil})`,
         );
       })
       .catch((error) => {
@@ -70,23 +79,27 @@ export class SocketsAdminGateway
   private async handleCanales(
     @ConnectedSocket() client: SocketUser,
   ): Promise<WsResponse<Array<string>>> {
-    const canales = ['todos'];
+    const canales = ['todos', client.data.user.perfil, client.data.user.correo];
     await client.join(canales);
     return {
       event: 'canales',
+      //
       data: canales,
     };
   }
 
-  @SubscribeMessage('message')
+  @SubscribeMessage('mensaje')
   private handleMessage(
     @ConnectedSocket() client: SocketUser,
-    @MessageBody() payload: any,
-  ): WsResponse<string> {
-    this.logger.log(`Client sent <message>: ${JSON.stringify(payload)}`);
+    @MessageBody() payload: { [key: string]: any },
+  ): WsResponse<{ [key: string]: any }> {
+    this.logger.log(`Client sent <mensaje>: ${JSON.stringify(payload)}`);
     return {
-      event: 'message',
-      data: payload,
+      event: 'mensaje', //responder con el mismo evento.
+      data: {
+        texto: `Mensaje recibido: ${payload.texto}`,
+        data: payload.data,
+      },
     };
   }
 }

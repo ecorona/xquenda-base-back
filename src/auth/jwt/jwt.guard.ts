@@ -1,6 +1,8 @@
 import {
   CanActivate,
   ExecutionContext,
+  HttpException,
+  HttpStatus,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -11,7 +13,10 @@ import { TokenPayloadDTO } from 'src/auth/dto/token-payload.dto';
 import { ConfigKeys } from 'src/config-keys.enum';
 import { IS_PUBLIC_KEY } from './public.decorator';
 import { UsuariosService } from 'src/usuarios/usuarios.service';
-import { RequestUser } from '../dto/request-user.dto';
+import { IS_PROFILE_KEY } from './profile.decorator';
+import { PerfilesEnum } from 'src/usuarios/dto/perfiles.enum';
+import { Request } from 'express';
+import { UsuarioIdentityDTO } from 'src/usuarios/dto/usuario-identity.dto';
 
 @Injectable()
 export class JwtGuard implements CanActivate {
@@ -30,37 +35,56 @@ export class JwtGuard implements CanActivate {
       return true;
     }
 
-    const request: RequestUser = context.switchToHttp().getRequest();
+    const request: Request & { user: UsuarioIdentityDTO } = context
+      .switchToHttp()
+      .getRequest();
     const tokenValue = this.extractTokenFromHeader(request);
     if (!tokenValue) {
-      throw new UnauthorizedException(new Error('Token not found'));
+      throw new HttpException('Token not found', HttpStatus.UNAUTHORIZED);
     }
-
+    let payload: TokenPayloadDTO;
     try {
-      const payload: TokenPayloadDTO = await this.jwtService.verifyAsync(
-        tokenValue,
-        {
-          secret: this.configService.get<string>(ConfigKeys.JWT_SECRET),
-        },
-      );
-
-      const user = await this.usuariosService.findById(payload.sub);
-
-      if (!user) {
-        throw new UnauthorizedException();
-      }
-
-      if (!user.activo) {
-        throw new UnauthorizedException(new Error('User is not active'));
-      }
-
-      request.user = await this.usuariosService.userIdentity(user);
-      return true;
+      payload = await this.jwtService.verifyAsync(tokenValue, {
+        secret: this.configService.get<string>(ConfigKeys.JWT_SECRET),
+      });
     } catch (error) {
       throw new UnauthorizedException(
-        new Error(error.message || 'Invalid token'),
+        new HttpException('Invalid token', HttpStatus.UNAUTHORIZED),
       );
     }
+
+    //validar que la solicitud provenga de la ip que se guardo en el token al momento del login
+    const ipOrigen = request.ips ? request.ips[0] : request.ip;
+    if (payload.ip !== ipOrigen) {
+      throw new HttpException('Invalid token source', HttpStatus.UNAUTHORIZED);
+    }
+
+    const user = await this.usuariosService.findById(payload.sub);
+
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.UNAUTHORIZED);
+    }
+
+    if (!user.activo) {
+      throw new HttpException('User is inactive', HttpStatus.UNAUTHORIZED);
+    }
+
+    //verificar si esta decorado para algun perfil
+    const paraPerfiles = this.reflector.getAllAndOverride<Array<PerfilesEnum>>(
+      IS_PROFILE_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+    if (paraPerfiles) {
+      if (!paraPerfiles.includes(user.perfil)) {
+        throw new HttpException(
+          'User does not have the required profile: ' + paraPerfiles.join(', '),
+          HttpStatus.FORBIDDEN,
+        );
+      }
+    }
+
+    request.user = await this.usuariosService.userIdentity(user);
+    return true;
   }
 
   private extractTokenFromHeader(request: Request): string | undefined {

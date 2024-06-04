@@ -18,6 +18,10 @@ export class SocketsAdminGuard implements CanActivate {
         throw new WsException('Usuario no encontrado');
       }
 
+      if (!user.activo) {
+        throw new WsException('Usuario inactivo');
+      }
+
       //adjuntar el usuario a la data del cliente
       client.data = {
         user,

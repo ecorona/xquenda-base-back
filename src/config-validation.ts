@@ -2,7 +2,7 @@ import * as Joi from 'joi';
 
 export const ConfigValidation = Joi.object({
   NODE_ENV: Joi.string()
-    .valid('development', 'production', 'test')
+    .valid('development', 'test', 'production')
     .default('development'),
   PORT: Joi.number().port().default(3000),
   DB_HOST: Joi.string().default('localhost'),

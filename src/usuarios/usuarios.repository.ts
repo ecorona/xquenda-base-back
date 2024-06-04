@@ -16,4 +16,8 @@ export class UsuariosRepository extends Repository<UsuarioEntity> {
   findById(id: number): Promise<UsuarioEntity> {
     return this.findOne({ where: { id } });
   }
+
+  findAll(): Promise<UsuarioEntity[]> {
+    return this.find();
+  }
 }

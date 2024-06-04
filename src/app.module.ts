@@ -27,15 +27,20 @@ import { SyslogEntity } from './syslog/entity/syslog.entity';
       ],
       inject: [ConfigService],
     }),
-    TypeOrmModule.forRoot({
-      type: 'mysql',
-      host: 'localhost',
-      port: 3306,
-      username: 'root',
-      password: 'rootpassword',
-      database: 'tutorial',
-      entities: [UsuarioEntity, SyslogEntity],
-      synchronize: true,
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        return {
+          type: 'mysql',
+          host: configService.get(ConfigKeys.DB_HOST),
+          port: configService.get(ConfigKeys.DB_PORT),
+          username: configService.get(ConfigKeys.DB_USERNAME),
+          password: configService.get(ConfigKeys.DB_PASSWORD),
+          database: configService.get(ConfigKeys.DB_DATABASE),
+          entities: [UsuarioEntity, SyslogEntity],
+          synchronize: true,
+        };
+      },
     }),
     UsuariosModule,
     AuthModule,
