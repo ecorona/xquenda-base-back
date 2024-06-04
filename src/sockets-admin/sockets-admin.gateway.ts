@@ -15,6 +15,7 @@ import { SocketsAdminGuard } from './sockets-admin.guard';
 import { Server } from 'socket.io';
 import { SocketUser } from './socket-user.dto';
 import { AuthService } from 'src/auth/auth.service';
+import { EventosAdmin } from './eventos-admin.enum';
 
 @WebSocketGateway({
   transports: ['websocket'],
@@ -69,20 +70,23 @@ export class SocketsAdminGateway
     this.logger.log(
       `Client disconnected: ${client.id} ${client.data.user?.correo}`,
     );
+    this.emit('todos', EventosAdmin.usuario_saliendo, {
+      correo: client.data.user.correo,
+    });
   }
 
   emit(channel: string, event: string, data: any): void {
     this.server.to(channel).emit(event, data);
   }
 
-  @SubscribeMessage('canales')
+  @SubscribeMessage(EventosAdmin.canales)
   private async handleCanales(
     @ConnectedSocket() client: SocketUser,
   ): Promise<WsResponse<Array<string>>> {
     const canales = ['todos', client.data.user.perfil, client.data.user.correo];
     await client.join(canales);
     return {
-      event: 'canales',
+      event: EventosAdmin.canales,
       //
       data: canales,
     };

@@ -9,6 +9,7 @@ import { SyslogInclude } from 'src/syslog/interceptors/syslog-include.decorator'
 import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
 import { SocketsAdminGateway } from 'src/sockets-admin/sockets-admin.gateway';
+import { EventosAdmin } from 'src/sockets-admin/eventos-admin.enum';
 
 @Controller('auth')
 export class AuthController {
@@ -31,7 +32,7 @@ export class AuthController {
     );
 
     //enviar un socket a 'todos', avisando que acaba de entrar el usuario
-    this.socketsAdminGateway.emit('todos', 'usuario-entrando', {
+    this.socketsAdminGateway.emit('todos', EventosAdmin.usuario_entrando, {
       correo: loginRequestDto.correo,
     });
 
