@@ -8,15 +8,10 @@ import { SesionUsuario } from './jwt/usuario-identity.decorator';
 import { SyslogInclude } from 'src/syslog/interceptors/syslog-include.decorator';
 import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
-import { SocketsAdminGateway } from 'src/sockets-admin/sockets-admin.gateway';
-import { EventosAdmin } from 'src/sockets-admin/eventos-admin.enum';
 
 @Controller('auth')
 export class AuthController {
-  constructor(
-    private readonly authService: AuthService,
-    private readonly socketsAdminGateway: SocketsAdminGateway,
-  ) {}
+  constructor(private readonly authService: AuthService) {}
   @Post('login')
   @Public()
   @Throttle({ default: { limit: 5, ttl: 10000 } })
@@ -30,11 +25,6 @@ export class AuthController {
       loginRequestDto.contrasenia,
       req.ips ? req.ips[0] : req.ip, //pasar la ip para almacenar en el token
     );
-
-    //enviar un socket a 'todos', avisando que acaba de entrar el usuario
-    this.socketsAdminGateway.emit('todos', EventosAdmin.usuario_entrando, {
-      correo: loginRequestDto.correo,
-    });
 
     return userLoggedIn;
   }

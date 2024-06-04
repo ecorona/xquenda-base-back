@@ -58,6 +58,10 @@ export class SocketsAdminGateway
         this.logger.log(
           `Client connected: ${client.id} - ${client.data.user.correo} (${client.data.user.perfil})`,
         );
+
+        this.emit('todos', EventosAdmin.usuario_entrando, {
+          correo: client.data.user.correo,
+        });
       })
       .catch((error) => {
         this.logger.error(error);
