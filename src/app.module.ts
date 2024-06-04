@@ -11,6 +11,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { ConfigKeys } from './config-keys.enum';
 import { ConfigValidation } from './config-validation';
 import { SyslogEntity } from './syslog/entity/syslog.entity';
+import { SyslogModule } from './syslog/syslog.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { SyslogEntity } from './syslog/entity/syslog.entity';
     UsuariosModule,
     AuthModule,
     SocketsAdminModule,
+    SyslogModule,
   ],
   controllers: [],
   providers: [

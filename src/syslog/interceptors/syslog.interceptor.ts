@@ -77,6 +77,7 @@ export class SyslogInterceptor implements NestInterceptor {
 
         //borrar datos sensibles
         delete body.password;
+        delete body.contrasenia;
         delete resData.access_token;
         delete resData.accessToken;
         delete resData.jwt;
